@@ -159,4 +159,122 @@ class Sala extends CI_Controller{
                             $e->getMessage());
         }
     }
+
+    public function alterar(){
+        //Código, descrição e andar
+        //recebidos via JSON e colocados em variaveis
+        //retornos possíveis:
+        //1 - dados alterados corretamente (banco)
+        //2 - codigo da sala não informado ou zerado
+        //3 - descrição não informada.
+
+        try {
+            $json = file_get_contents('php://input');
+            $resultado = json_decode($json);
+
+            //Array com os dados que deverão vir do Front
+            $lista = array(
+                "codigo" => '0',
+                "descricao" => '0',
+                "andar" => '0',
+                "capacidade" => '0'
+            );
+
+            if (verificarParam($resultado, $lista) == 1) {
+                //Fazendo os setters
+                $this -> setCodigo($resultado->codigo);
+                $this -> setDescricao($resultado->descricao);
+                $this -> setAndar($resultado -> andar);
+                $this -> setCapacidade($resultado -> capacidade);
+
+                //Validando para tipo de usuário que deverá ser administrador, comum ou vazio
+                if (trim($this->getCodigo()) == '') {
+                    $retorno = array(
+                        'codigo' => 2,
+                        'msg' => 'Código não informado'
+                    );
+                    // Descricao, Andar ou Capacidade, pelo menos 1 deles precisa ser informado
+                }elseif (trim($this->getDescricao()) == '' && trim($this->getAndar()) == '' &&
+                            trim($this -> getCapacidade()) == '') {
+
+                                $retorno = array('codigo' => 3,
+                                'msg' => 'Pelo menos um parâmetro precisa ser passado para atualização');
+                }else{
+                    //Realizo a instância da Model
+                    $this -> load->model('M_sala');
+
+                    //Atributo $retorno recebe array com informações
+                    // da alteração dos dados
+                    $retorno = $this -> M_sala-> alterar($this -> getCodigo(),
+                                                $this -> getDescricao(),
+                                                $this -> getAndar(),
+                                                $this -> getCapacidade());
+                }
+            }else{
+                $retorno = array(
+                    'codigo' => 99,
+                    'msg' => 'Os campos vindos do FrontEnd não representam o método de Alteração.
+                            Verifique.'
+                );
+            }
+
+        } catch (Exception $e) {
+            $retorno = array('codigo' => 0,
+                            'msg' => 'ATENÇÃO: O seguintee erro aconteceu ->',
+                            $e -> getMessage());
+        }
+        //retorno no formato JSON
+        echo json_encode($retorno);
+
+    }
+
+    public function desativar(){
+        //Usuário recebido via JSON e colocado em variável
+        //Retorno possíveis:
+        //1 - Sala desativada corretamente (Banco)
+        //2 - Código da Sala não informado
+        //5 - Houve algum problema na desativação da sala
+        //6 - Dados não encontrados (Banco)
+
+        try{
+            $json = file_get_contents('php://input');
+            $resultado = json_decode($json);
+            //Array com os dados que deverão vir do Front
+            $lista = array(
+                "codigo" => '0'
+            );
+
+            if (verificarParam($resultado, $lista) == 1) {
+                $json = file_get_contents('php://input');
+                $resultado = json_decode($json);
+
+                //Fazendo os setters
+                $this -> setCodigo($resultado-> codigo);
+
+                //Validacao para do usuário que não haverá ser branco
+                if (trim($this->getCodigo() == '')) {
+                    $retorno = array('codigo' => 2,
+                                    'msg' => 'Código não informado');
+                }else{
+                    //Realizo a instância da Mode
+                    $this -> load -> model('M_sala');
+
+                    //Atributo $retorno recebe array com informações
+                    $retorno = $this->M_sala->desativar($this -> getCodigo());
+                }
+
+            }else{
+                $retorno = array(
+                    'codigo' => 99,
+                    'msg' => 'Os campos vindos do FrontEnd não representam o método de login, Verifique.'
+                );
+            }
+        }catch(Exception $e){
+            $retorno = array('codigo' => 0,
+                            'msg' => 'ATENÇÃO: O seguintee erro aconteceu ->',
+                            $e -> getMessage());
+        }
+        //retorno no formato JSON
+        echo json_encode($retorno);
+    }
 }
